@@ -44,6 +44,82 @@ BiocManager::install("CLL")
 library("CLL")
 ```
 
+
+
+
+# Subset:
+It's difficult to subset your dataset if you keep your 3 tables separately
+To make analysis easier, Bioconductor provides useful classes - object oriented programming
+
+class - defines a structure to hold complex data
+object - a specific instance of a class
+methods - functions that work on a specific class
+getters/accessors - Get data stored in an object
+setters/ - Modify data stored in an object
+
+# Load package
+library(Biobase)
+
+# Create ExpressionSet object
+eset <- ExpressionSet(assayData = x,
+                      phenoData = AnnotatedDataFrame(p),
+                      featureData = AnnotatedDataFrame(f))
+
+# Accessing parts of an ExpressionSet:
+Expression matrix
+x <- exprs(eset)
+
+Feature data
+f <- fData(eset)
+
+Phenotype data
+p <- pData(eset)
+
+
 ```{r}
-boxplot(x[1,] ~ p[,"er"], main = f[1,"symbol"])
+data(sCLLex)
+
+BiocManager::install("annotate")
+library(annotate)
+BiocManager::install("hgu95av2.db")
+library(hgu95av2.db)
+ID <- featureNames(sCLLex)
+Symbol <- getSYMBOL(ID,"hgu95av2.db")
+fData(sCLLex) <- data.frame(Symbol=Symbol)
+
+
+# Expression matrix
+x <- exprs(sCLLex)
+
+# Feature data
+f <- fData(sCLLex)
+
+# Phenotype data
+p <- pData(sCLLex)
+
 ```
+
+
+```{r}
+boxplot(x[1,] ~ p[,"Disease"], main = f[1,"Symbol"])
+```
+
+# Subset with 3 separate objects:
+
+Subset the first 10 samples and the first 1000 genes:
+x_sub <- x[1000, 1:10]
+f_sub <- f[1000, ]
+p_sub <- p[1:10, ]
+
+Subset with an ExpressionSet object:
+
+eset_sub <- eset[1000, 1:10]
+
+nrow(exprs(eset_sub)) == nrow(fData(eset_sub))
+
+[1] TRUE
+
+ncol(exprs(eset_sub)) == nrow(pData(eset_sub))
+
+[1] TRUE
+
