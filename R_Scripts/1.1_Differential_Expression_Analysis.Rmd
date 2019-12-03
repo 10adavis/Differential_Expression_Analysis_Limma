@@ -1,0 +1,49 @@
+---
+title: "1.1_Differential_Expression_Analysis"
+author: "Andrew Davis"
+date: "12/2/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Differential Expression Analysis
+
+John Blischak
+
+Genes = features
+Phenotype = variable of interest, i.e. treatment, genotype, age, etc
+Expression levels (statistical models test differences in these measurements)
+
+Why do large high throughput differential expression analysis?
+novelty (identify new genes that change), context, systems
+
+Caveats: measurements are relative, not absolute
+Statistical methods cannot rescue a poorly designed study
+
+Toy dataset:
+Bioconductor package "breastCancerVDX"
+344 patients: 209 ER+, 135 ER-
+
+
+Bioconductor: CLL
+22 patients 8 stable, 14 progressive
+
+Expression matrix (x)
+Feature data (f) - feature attributes (same # of rows as expression matrix)
+Phenotype data (p) - describes each of the samples in the study (# of rows = the number of columns in the expression matrix)
+
+boxplot(y-axis ~ x-axis, main = "title")
+
+# Load dependencies:
+
+```{r}
+BiocManager::install("CLL")
+library("CLL")
+```
+
+```{r}
+boxplot(x[1,] ~ p[,"er"], main = f[1,"symbol"])
+```
