@@ -1,0 +1,57 @@
+---
+title: "3.03_Normalizing_and_Filtering"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Normalizing and Filtering:
+
+# Pre-processing steps:
+For technology specific pre-processing steps,
+Check the bioconductor workflow course in datacamp!!!
+
+The following should help with most data types:
+log transform
+quantile normalize
+filter
+
+# Plot distribition of each sample
+plotDensities(eset, legend=FALSE)
+
+log transform - increase the distance between small measurements, and decrease the distance between the large measurements
+
+exprs(eset) <- log(exprs(eset))
+plotDenstities(eset, legend=FALSE)
+
+To reduce the effects of large scale differences due to technical artifacts, one can use Qauntile normalization
+e
+
+# Quantile normalize
+```{r}
+sCLLex_norm<-sCLLex 
+exprs(sCLLex_norm) <- normalizeBetweenArrays(exprs(sCLLex))
+
+plotDensities(sCLLex, legend = FALSE)
+plotDensities(sCLLex_norm, legend = FALSE)
+```
+This will ensure that all samples have the same distribution
+
+# View the normalized data
+plotDensities(eset, legend = FALSE)
+abline(v = 5)
+```{r}
+plotDensities(sCLLex_norm, legend = FALSE)
+abline(v = 5)
+# Create logical vector
+keep <- rowMeans(exprs(sCLLex_norm)) > 5
+# Filter the genes
+sCLLex_norm <- sCLLex_norm[keep, ]
+plotDensities(sCLLex_norm, legend = FALSE)
+```
+
+s
+
+

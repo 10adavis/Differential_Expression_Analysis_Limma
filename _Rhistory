@@ -1,0 +1,68 @@
+knitr::opts_chunk$set(echo = TRUE)
+library("CLL")
+boxplot(x[1,] ~ p[,"er"], main = f[1,"symbol"])
+?CLL
+class(CLL)
+data("CLLbatch")
+View(CLLbatch)
+class(CLLbatch)
+exprs(CLLbatch)
+eset <- ExpressionSet(assayData = AnnotatedDataFrame(exprs(CLLbatch)),
+phenoData = AnnotatedDataFrame(pData(CLLbatch)),
+featureData = AnnotatedDataFrame(fData(CLLbatch)))
+library(Biobase)
+eset <- ExpressionSet(assayData = AnnotatedDataFrame(exprs(CLLbatch)),
+phenoData = AnnotatedDataFrame(pData(CLLbatch)),
+featureData = AnnotatedDataFrame(fData(CLLbatch)))
+eset <- ExpressionSet(assayData = exprs(CLLbatch),
+phenoData = AnnotatedDataFrame(pData(CLLbatch)),
+featureData = AnnotatedDataFrame(fData(CLLbatch)))
+View(eset)
+# Expression matrix
+x <- exprs(eset)
+# Feature data
+f <- fData(eset)
+# Phenotype data
+p <- pData(eset)
+boxplot(x[1,] ~ p[,"er"], main = f[1,"symbol"])
+head(f)
+View(f)
+data("sCLLex")
+View(sCLLex)
+rm(CLLbatch)
+x <- exprs(sCLLex)
+# Feature data
+f <- fData(sCLLex)
+# Phenotype data
+p <- pData(sCLLex)
+View(p)
+boxplot(x[1,] ~ p[,"Disease"], main = f[1,"symbol"])
+View(f)
+View(sCLLex)
+View(f)
+f
+head(f)
+View(f)
+View(sCLLex)
+View(x)
+View(sCLLex)
+?limma
+library(annotate)
+View(sCLLex)
+library(annotate)
+library(hgu95av2.db)
+BiocManager::install("hgu95av2.db")
+Yes
+BiocManager::install("hgu95av2.db")
+library(hgu95av2.db)
+ID <- featureNames(sCLLex)
+Symbol <- getSYMBOL(ID,"hgu95av2.db")
+fData(sCLLex) <- data.frame(Symbol=Symbol)
+x <- exprs(sCLLex)
+# Feature data
+f <- fData(sCLLex)
+# Phenotype data
+p <- pData(sCLLex)
+View(f)
+boxplot(x[1,] ~ p[,"Disease"], main = f[1,"symbol"])
+boxplot(x[1,] ~ p[,"Disease"], main = f[1,"Symbol"])

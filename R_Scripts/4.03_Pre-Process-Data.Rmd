@@ -1,0 +1,81 @@
+---
+title: "4.03_Pre-Process-Data"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Putting it all together: pre-process the data
+
+## Doxorubicin-induced cardiotoxicity study:
+
+2x2 design to study mechanism of doxo
+2 genotypes: wild-type (WT), Top2b null (top2b)
+2 treatments: PBS (pbs), doxorubicin (dox)
+Zhang et al. 2012
+
+Is Top2b required for doxorubicin induced toxocity
+
+
+dim(eset)
+ 
+Features  Samples 
+   29532       12
+ 
+table(pData(eset)[, c("genotype", "treatment")])
+ 
+treatment
+genotype dox pbs
+   top2b   3   3
+   wt      3   3
+   
+```{r}
+plotDensities(eset, group = pData(eset)[, "genotype"], legend = "topright")
+
+# Create a new ExpressionSet to store the processed data
+eset <- eset_raw
+# Log transform
+exprs(eset) <- log(exprs(eset))
+plotDensities(eset,  group = pData(eset)[,"genotype"], legend = "topright")
+# Quantile normalize
+exprs(eset) <- normalizeBetweenArrays(exprs(eset))
+plotDensities(eset,  group = pData(eset)[,"genotype"], legend = "topright")
+# Determine the genes with mean expression level greater than 0
+keep <- rowMeans(exprs(eset)) > 0
+sum(keep)
+# Filter the genes
+eset <- eset[keep,]
+plotDensities(eset, group = pData(eset)[,"genotype"], legend = "topright")
+```
+   
+Log transform
+Quantile normalize
+Filtering
+
+```{r}
+# Find the row which contains Top2b expression data
+top2b <- which(fData(eset)[,"symbol"] == "Top2b")
+
+# Plot Top2b expression versus genotype
+boxplot(exprs(eset)[top2b, ] ~ pData(eset)[,"genotype"],
+        main = fData(eset)[top2b, ])
+```
+
+# Check sources of variation
+Principal component analysis
+limma function plotMDS
+
+
+```{r}
+# Plot principal components labeled by genotype
+plotMDS(eset, labels = pData(eset)[,"genotype"], gene.selection = "common")
+
+# Plot principal components labeled by treatment
+plotMDS(eset, labels = pData(eset)[,"treatment"], gene.selection = "common")
+```
+
+
+
+

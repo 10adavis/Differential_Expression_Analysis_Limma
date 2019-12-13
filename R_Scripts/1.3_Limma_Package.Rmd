@@ -5,13 +5,74 @@ date: "12/2/2019"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+## Limma
 
-## R Markdown
+# Advantages of the Limma package:
 
+Testing thousands of genes would require lots of boiler plate code
+ 
+pval <- numeric(length = nrow(x))
+r2 <- numeric(length = nrow(x))
+for (i in 1:nrow(x)) {
+  mod <- lm(x[i, ] ~ p[, "er"])
+  result <- summary(mod)
+  pval[i] <- result$coefficients[2, 4]
+  r2[i] <- result$r.squared
+}
+
+# Beyond just convenience of not having to write code like the one above you get improved performance because:
+1.) Improved inference by sharing information across genes
+2.) Lots of functions for pre- and post-processing (see Ritchie et al., 2015 for an overview)
+
+# Specifying a linear model:
+
+Y = B0 + B1 + E
+Y=expression level of gene
+B0=Mean expression level in control group
+B1= mean different in expression level in treatment group
+X1=Treatment status: 0 = control 1=treatment
+E=random noise
+
+# Specifying a linear model in R:
+design <- model.matrix(~explanatory variable, data = phenotype data frame)
+head(design, 2)
+      
+(Intercept) erpositive
+VDX_3           1          0
+VDX_5           1          1
+ 
+colSums(design)
+ 
+(Intercept)  erpositive 
+        344         209
+
+# Testing with limma:
+library(limma)
+fit <- lmFit(eset, design)
+# Calculate the t-statistics
+fit <- eBayes(fit)
+ 
+# Summarize results
+results <- decideTests(fit[, "er"])
+summary(results)
+
+# Specify a linear model with 2 groups
 ```{r}
+library(limma)
+# Create design matrix for leukemia study
+design <- model.matrix(~Disease, data = pData(sCLLex))
 
+# Count the number of samples modeled by each coefficient
+colSums(design)
+
+# Fit the model
+fit <- lmFit(sCLLex, design)
+
+# Calculate the t-statistics
+fit <- eBayes(fit)
+
+# Summarize results
+results <- decideTests(fit[, "Diseasestable"])
+summary(results)
 
 ```

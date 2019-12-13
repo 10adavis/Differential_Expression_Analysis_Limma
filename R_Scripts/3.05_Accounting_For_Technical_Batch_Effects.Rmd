@@ -1,0 +1,61 @@
+---
+title: "3.05_Accounting_For_Technical_Batch_Effects"
+output: html_document
+---
+
+### Accounting for technical batch effects
+
+# Dimension reduction techniques:
+
+* Principal Components Analysis (PCA)
+* MultiDimensional Scaling (MDS)
+* Identify the largest sources of variation in a data set
+
+Are the largest sources of variation correlated with the variables of interest or technical batch effects?
+
+# plotMDS
+```{r}
+library(limma)
+plotMDS(sCLLex_norm, labels = pData(sCLLex_norm)[, "Disease"], gene.selection = "common")
+```
+
+# Remove batch effects:
+```{r}
+exprs(eset) <- removeBatchEffect(eset, batch = pData(eset)[, "batch"],
+                                 covariates = pData(eset)[, "rin"])
+```
+
+
+## Example dataset:
+Olfactory stem cells
+7 treatments, 4 batches
+Bioconductor package: HarmanData, Harman
+Osmond-McLeod et al. 2013, Oytam et al. 2016
+
+```{r}
+BiocManager::install("HarmanData")
+library("HarmanData")
+
+BiocManager::install("Harman")
+library("Harman")
+
+data(OLF)
+
+OLF_eset <- ExpressionSet(assayData = as.matrix(olf.data),
+                      phenoData = AnnotatedDataFrame(olf.info))
+
+plotMDS(OLF_eset, labels = pData(OLF_eset)[, "Treatment"], gene.selection = "common")
+
+plotMDS(OLF_eset, labels = pData(OLF_eset)[, "Batch"], gene.selection = "common")
+
+
+# remove batch effect:
+OLF_eset_batchcorr <- OLF_eset
+exprs(OLF_eset_batchcorr) <- removeBatchEffect(OLF_eset_batchcorr, batch = pData(OLF_eset_batchcorr)[, "Batch"])
+
+plotMDS(OLF_eset_batchcorr, labels = pData(OLF_eset_batchcorr)[, "Treatment"], gene.selection = "common")
+
+plotMDS(OLF_eset_batchcorr, labels = pData(OLF_eset_batchcorr)[, "Batch"], gene.selection = "common")
+```
+
+

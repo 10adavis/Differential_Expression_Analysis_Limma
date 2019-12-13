@@ -1,0 +1,106 @@
+---
+title: "3.10_Visualization_and_Enrichment"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Visualizing Results:
+
+# Re-load leukemia data:
+```{r}
+
+ID_2 <- featureNames(sCLLex)
+Symbol_2 <- getEG(ID_2,"hgu95av2.db")
+Symbol <- getSYMBOL(ID,"hgu95av2.db")
+fData(sCLLex) <- data.frame(ENTREZ=Symbol_2,Symbol=Symbol)
+
+group_design <- model.matrix(~0 + Disease, data = pData(sCLLex))
+colSums(group_design)
+cm <- makeContrasts(Progression = Diseaseprogres. - Diseasestable,
+                    levels = group_design)
+# With makeContrasts you can make any contrast you'd like by just referring to the column names of the design matrix
+cm
+```
+
+#  Testing the group-means parametrization
+```{r}
+fit <- lmFit(sCLLex, group_design)
+ 
+head(fit$coefficients, 3)
+
+fit2 <- contrasts.fit(fit, contrasts = cm)
+
+head(fit2$coefficients, 3)
+```
+
+# The parametrization does not change the results
+```{r}
+#Calculate the t-statistics
+fit2 <- eBayes(fit2)
+ 
+# Count the number of differentially expressed genes
+results <- decideTests(fit2)
+summary(results)
+```
+
+
+
+# Return the most differentially expressed genes:
+```{r}
+topTable(fit2, number=3)
+```
+
+B = log odds (another way of telling if a gene is DE'd)
+
+# Obtain all DEG results:
+```{r}
+stats <- topTable(fit2, number=nrow(fit2), sort.by="none")
+# by not sorting, we'll be able to combine the results with the input data
+```
+
+
+# Histogram of p-values:
+Under the null hypothesis of no DE, we'd expect the p-values to be uniformaly distributed
+```{r}
+hist(stats[,"P.Value"])
+```
+
+If you don't get a flat plot, or a plot with many small p-values, you need to check your code and see if your contrasts were selected properly.
+
+
+# Volcano plots:
+```{r}
+volcanoplot(fit2, highlight = 5, names = fit2$genes[,"Symbol"])
+
+```
+
+# Enrichment Testing:
+Databases: KEGG, 
+
+Using Fisher's exact test for enrichment testing.
+
+you need to 
+
+You need to use ENTREZID:
+```{r}
+head(fit2$genes, 3)
+
+ENTREZ <- fit2$genes[, "ENTREZ"]
+
+enrich_kegg <- kegga(fit2, geneid = ENTREZ, species = "Hs")
+
+topKEGG(enrich_kegg, number = 3)
+enrich_go <- goana(fit2, geneid = ENTREZ, species = "Hs")
+topGO(enrich_go, ontology = "BP", number = 3)
+```
+
+
+
+
+
+
+
+

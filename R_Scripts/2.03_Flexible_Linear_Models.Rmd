@@ -1,0 +1,241 @@
+---
+title: "2.03_Flexible_Linear_Models"
+output: html_document
+---
+
+### Flexible Linear Models:
+
+# Models for complicated study designs
+
+The treatment-contrast parametization
+Each coefficient represents the difference from a base condition
+
+An alternative is:
+Group-Means parametization 
+Y=B1(X1) + B2(X2) + E
+B1 = mean in ER-neg
+B2 = mean in ER-pos
+Tets: B2 - B1 = 0 
+
+No intercept coefficient
+Therefore you have to construct contrasts to test for differential expression
+
+# To include a model without an intercept term:
+```{r}
+group_design <- model.matrix(~0 + Disease, data = pData(sCLLex))
+colSums(group_design)
+cm <- makeContrasts(Progression = Diseaseprogres. - Diseasestable,
+                    levels = group_design)
+# With makeContrasts you can make any contrast you'd like by just referring to the column names of the design matrix
+cm
+```
+
+#  Testing the group-means parametrization
+```{r}
+fit <- lmFit(sCLLex, group_design)
+ 
+head(fit$coefficients, 3)
+
+fit2 <- contrasts.fit(fit, contrasts = cm)
+
+head(fit2$coefficients, 3)
+```
+
+# The parametrization does not change the results
+```{r}
+#Calculate the t-statistics
+fit2 <- eBayes(fit2)
+ 
+# Count the number of differentially expressed genes
+results <- decideTests(fit2)
+summary(results)
+```
+
+
+## Studies with more than two groups:
+3 different types of leukemias: ALL, AML, CML
+Bioconductor package: leukemiasEset
+Kohlmann et al. 2008, Haferlach et al. 2010
+
+```{r}
+BiocManager::install("leukemiasEset")
+library("leukemiasEset")
+
+data(leukemiasEset)
+
+library(annotate)
+library(hgu95av2.db)
+ID_1 <- featureNames(leukemiasEset)
+Symbol_1 <- getSYMBOL(ID_1,"hgu95av2.db")
+fData(leukemiasEset) <- data.frame(Symbol=Symbol_1)
+
+
+# Expression matrix
+a <- exprs(leukemiasEset)
+
+# Feature data
+b <- fData(leukemiasEset)
+
+# Phenotype data
+c <- pData(leukemiasEset)
+
+
+dim(leukemiasEset)
+table(pData(leukemiasEset)[, "LeukemiaType"])
+```
+
+# Build a group-means model for 3 groups
+Y=B1(X1) + B2(X2) + B3(X3) + E
+B1 = mean in ER-neg
+B2 = mean in ER-pos
+Tests:
+AML v. ALL: B2 - B1 = 0
+CML v. ALL: B3 - B1 = 0
+CML v. AML: B3 - B2 = 0
+
+The process is identical to the 2 group case
+
+```{r}
+design <- model.matrix(~0 + LeukemiaType, data = pData(leukemiasEset))
+
+head(design, 3)
+
+colSums(design)
+```
+
+# Make contrasts for 3 groups:
+```{r}
+library(limma)
+cm <- makeContrasts(AMLvALL = LeukemiaTypeAML - LeukemiaTypeALL,
+                    CMLvALL = LeukemiaTypeCML - LeukemiaTypeALL,
+                    CMLvAML = LeukemiaTypeCML - LeukemiaTypeAML,
+                    levels = design)
+
+cm
+```
+
+# Testing 3 groups
+```{r}
+# Fit coefficients
+fit <- lmFit(leukemiasEset, design)
+
+# Fit contrasts
+fit2 <- contrasts.fit(fit, contrasts = cm)
+
+# Calculate t-statistics
+fit2 <- eBayes(fit2)
+
+# Summarize results
+results <- decideTests(fit2)
+summary(results)
+```
+
+CML and ALL have the biggest difference
+
+
+
+## Factorial experimental design:
+
+How to model studies with a factorial experimental design
+2x2 design:
+Example: Study effect of low temperature in plants: 2 types of plants
+col, vte2 (3 replicates each)
+Exposed to normal and low temperature
+
+# Model for 2x2 factorial:
+Create a coefficient for each group:
+Y=B1(X1) + B2(X2) + B3(X3) + B4(X4) + E
+B1 = mean in col plants at low temperature
+B2 = mean in col plants at low temperature
+B3 = mean in vte2 plants at low temperature
+B4 = mean in vte2 at normal temperature
+
+# Need to create a new group that captures both variables:
+group <- with(pData(eset), paste(type, temp, sep = "."))
+# Convert to a factor
+group <- factor(group)
+
+design <- model.matrix(~0 + group)
+# Replace column names with factor levels
+colnames(design) <- levels(group)
+
+head(design, 3)
+  col.low col.normal vte2.low vte2.normal
+1       0          1        0           0
+2       0          1        0           0
+3       0          1        0           0
+
+colSums(design)
+ 
+col.low  col.normal    vte2.low vte2.normal 
+3           3           3           3
+
+# Make Contrasts for a 2x2 factorial:
+      B1 B2 B3 B4
+type	col	col	vte2	vte2
+temp	low	normal	low	normal
+
+Contrasts we're interested in:
+Differences of type in normal temp
+Differences of type in low temp: 
+Differences of temp in vte2
+Differences of temp in col type:
+Differences of temp between col and vte2 type: (B3-B4) - (B1-B2) = 0
+# This is traditionally referred to as an interaction effect - how does the response to temp differ between the two types of plants
+
+library(limma)
+cm <- makeContrasts(type_normal = vte2.normal - col.normal,
+                    type_low = vte2.low - col.low,
+                    temp_vte2 = vte2.low - vte2.normal,
+                    temp_col = col.low - col.normal,
+                    interaction = (vte2.low - vte2.normal) -
+                                  (col.low - col.normal),
+                    levels = design)
+                    
+Contrasts
+Levels        type_normal type_low temp_vte2 temp_col interaction
+  col.low               0       -1         0        1          -1
+  col.normal           -1        0         0       -1           1
+  vte2.low              0        1         1        0           1
+  vte2.normal           1        0        -1        0          -1
+  
+
+# Fit coefficients
+fit <- lmFit(eset, design)
+
+# Fit contrasts
+fit2 <- contrasts.fit(fit, contrasts = cm)
+
+# Calculate t-statistics
+fit2 <- eBayes(fit2)
+
+# Summarize results
+results <- decideTests(fit2)
+summary(results)  
+
+   type_normal type_low temp_vte2 temp_col interaction
+-1           0      466      1635     1885         128
+0        11871    10915      7635     6989       11640
+1            0      490      2601     2997         103
+# Conclusion: The plants have similar responses at normal temps but differ at low temps
+
+# Exercises:
+2x2 design to study effect of drought in trees:
+2 types of Populus: DN34, NM6
+2 water conditions: normal, drought
+Wilkins et al. 2009
+ 
+dim(eset)
+ 
+Features  Samples 
+   16172       12
+ 
+table(pData(eset)[, c("type", "water")])
+ 
+water
+type   drought normal
+  dn34       3      3
+  nm6        3      3
+  
+
+
